@@ -1,14 +1,33 @@
 'use strict';
 
 // Declare app level module which depends on views, and core components
-angular.module('myApp', [
+var app = angular.module('myApp', [
   'ngRoute',
-  'myApp.view1',
-  'myApp.view2',
-  'myApp.version'
-]).
-config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
-  $locationProvider.hashPrefix('!');
+  'ngMaterial',
+  'ngCookies',
+  'myApp.services',
+  'myApp.login',
+  'myApp.main',
+  'myApp.user',
+])
+  .value('host', 'https://localhost:7234')
+  .config(['$locationProvider', '$routeProvider', function ($locationProvider, $routeProvider) {
+    $locationProvider.hashPrefix('!');
+    $routeProvider.otherwise({ redirectTo: '/login' });
+  }]);
 
-  $routeProvider.otherwise({redirectTo: '/view1'});
-}]);
+app.run(["$location", "$http", "$rootScope",
+  function ($location, $http, $rootScope) {
+    var authToken = localStorage.getItem('authToken');
+    console.log('Auth token: ' + authToken);
+    if (authToken) {
+      $http.defaults.headers.common["Authorization"] = authToken;
+    }
+
+    $rootScope.$on("$locationChangeStart", function (event, next, current) {
+      if ($location.path() !== "/login" && !authToken) {
+        $location.path("/login");
+      }
+    });
+  }
+]);
